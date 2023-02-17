@@ -9,6 +9,9 @@ for archivo in csvs:   #archivo representa al csv que se va a cargar
         reader = csv.DictReader(f, delimiter='\t')
         for row in reader:
             datos.append(row)
+            #a la row hay que añadirle en que cuatrianual esta
+            
+    ##Aqui añade los datos a las tablas (antes de que termine el for)
 
 
 print(datos[0])
