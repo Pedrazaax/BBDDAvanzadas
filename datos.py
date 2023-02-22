@@ -12,12 +12,12 @@ def cargarDatos():
         with open(archivo, 'r') as f:
             reader = csv.DictReader(f, delimiter='\t')
             for row in reader:
-                row['CUATRIENAL'] = contCuatrienal
+                row['cuatrienal'] = contCuatrienal
                 datos.append(row)
                 
         contCuatrienal = contCuatrienal +1
 
-def crearTabla():
+class crearTabla:
     
     cursor = conn.cursor()
     cursor.execute("drop table if exists datosMercadoLaboral")
