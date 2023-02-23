@@ -1,15 +1,60 @@
 import csv
+import sqlite3
 
-csvs =['EES_2018.csv']  #Para cargar todos los csvs a la vez
+conn = sqlite3.connect('salarios.db')
 datos = []
 
-# la primera fila la toma para el nombre de los campos y a partir de ahi añade los datos
-for archivo in csvs:   #archivo representa al csv que se va a cargar
-    with open(archivo, 'r') as f:
-        reader = csv.DictReader(f, delimiter='\t')
-        for row in reader:
-            datos.append(row)
+def cargarDatos():
+    csvs =['BBDDAvanzadas/microdatos/EES_2002.csv','BBDDAvanzadas/microdatos/EES_2006.csv','BBDDAvanzadas/microdatos/EES_2010.csv','BBDDAvanzadas/microdatos/EES_2014.csv','BBDDAvanzadas/microdatos/EES_2018.csv']  #Para cargar todos los csvs a la vez
+    contCuatrienal= 1 #Sirve para saber en que cuatrianual estamos sabiendo que empezamos en 1995
+    # la primera fila la toma para el nombre de los campos y a partir de ahi añade los datos
+    for archivo in csvs:   #archivo representa al csv que se va a cargar
+        with open(archivo, 'r') as f:
+            reader = csv.DictReader(f, delimiter='\t')
+            for row in reader:
+                row['CUATRIENAL'] = contCuatrienal
+                datos.append(row)
+        contCuatrienal = contCuatrienal +1
+
+def crearTabla():
+    cursor = conn.cursor()
+    cursor.execute("DROP TABLE IF EXISTS datosMercadoLaboral")
+    cursor.execute("CREATE TABLE datosMercadoLaboral (ORDENCCC INTEGER PRIMARY KEY, ORDENTRA INTEGER, NUTS1 INTEGER, CNACE TEXT,ESTRATO2 INTEGER,CONTROL INTEGER, MERCADO INTEGER, CONVENIO INTEGER,SEXO INTEGER, TIPOPAIS INTEGER, CNO1 TEXT, RESPONSA INTEGER, ESTU INTEGER, MESANTI INTEGER, ANOANTI INTEGER, TIPOJOR INTEGER, TC INTEGER, VAL INTEGER, VAN INTEGER, PUENTES INTEGER, JAP INTEGER, JSP INTEGER, HEXTRA INTEGER, SALBASE INTEGER, EXTRAORM INTEGER, PHEXTRA INTEGER, COMSAL INTEGER, COMSALTT INTEGER, COMSALV INTEGER, IRPFMES INTEGER, COTIZA INTEGER, AFECMES INTEGER, DIAS INTEGER, SALBRUTO INTEGER, PEXTRAAF INTEGER, PEXTRAAV INTEGER, VESP INTEGER, AFECANO INTEGER, MESCOMA INTEGER, DIACOMA INTEGER, ANOS2 INTEGER, FACTOTAL INTEGER, CUATRIENAL INTEGER     )")
+    conn.commit()
 
 
-print(datos[0])
-print(datos[0]["ORDENTRA"])
+def insercionDatos():
+    #query = "INSERT INTO datosMercadoLaboral (ORDENCCC, ORDENTRA, NUTS1, CNACE, ESTRATO2, CONTROL, MERCADO, SEXO, TIPOPAIS, CNO1, RESPONSA, ESTU, MESANTI, ANOANTI, TIPOJOR, VAL, VAN, PUENTES, JAP, JSP1, JSP2, HEXTRA, SALBASE, EXTRAORM, PHEXTRA, COMSAL, COMSALTT, IRPFMES, COTIZA, DIAS, SALBRUTO, PEXTRAAF, PEXTRAAV, VESP, AFECANO, MESCOMA, DIACOMA, ANOS2, FACTOTAL, CUATRIENAL) VALUES (:ORDENCCC, :ORDENTRA, :NUTS1, :CNACE, :ESTRATO2, :CONTROL, :MERCADO, :SEXO, :TIPOPAIS, :CNO1, :RESPONSA, :ESTU, :MESANTI, :ANOANTI, :TIPOJOR, :VAL, :VAN, :PUENTES, :JAP, :JSP1,:JSP2, :HEXTRA, :SALBASE, :EXTRAORM, :PHEXTRA, :COMSAL, :COMSALTT, :IRPFMES, :COTIZA, :DIAS, :SALBRUTO, :PEXTRAAF, :PEXTRAAV, :VESP, :AFECANO, :MESCOMA, :DIACOMA, :ANOS2, :FACTOTAL, :CUATRIENAL)"
+    #query = "INSERT INTO datosMercadoLaboral (ORDENCCC, ORDENTRA, NUTS1,CNACE,ESTRATO2,CONTROL,MERCADO,CONVENIO,SEXO,TIPOPAIS,CNO1,RESPONSA,ESTU,MESANTI,ANOANTI,TIPOJOR,TC,VAL,VAN,PUENTES,JAP,JSP,HEXTRA,SALBASE,EXTRAORM,PHEXTRA,COMSAL,COMSALTT,COMSALV,IRPFMES,COTIZA,AFECMES,DIAS,SALBRUTO,PEXTRAAF,PEXTRAAV,VESP,AFECANO,MESCOMA,DIACOMA,ANOS2,FACTOTAL,CUATRIENAL) VALUES (?, ?, ?, ?, ? ,?, ?, ?, ?, ?,?, ?, ?, ?, ? ,?, ?, ?, ?, ?,?, ?, ?, ?, ? ,?, ?, ?, ?, ?,?, ?, ?, ?, ? ,?, ?, ?, ?, ?,?,?,?)"
+    query = "INSERT INTO datosMercadoLaboral (ORDENCCC ,CONTROL, RESPONSA, NUTS1, EXTRAORM, SALBASE, IRPFMES, ANOANTI, MERCADO, TIPOJOR, FACTOTAL, VAL, CNO1, MESANTI, COMSALTT, COTIZA, VAN, ESTU, ESTRATO2, PHEXTRA, COMSAL, ORDENTRA, SEXO, PUENTES, HEXTRA, ANOS2, JAP, CNACE, TIPOPAIS, CUATRIENAL) VALUES (:ORDENCCC, :CONTROL, :RESPONSA, :NUTS1, :EXTRAORM, :SALBASE, :IRPFMES, :ANOANTI, :MERCADO, :TIPOJOR, :FACTOTAL, :VAL, :CNO1, :MESANTI, :COMSALTT, :COTIZA, :VAN, :ESTU, :ESTRATO2, :PHEXTRA, :COMSAL, :ORDENTRA, :SEXO, :PUENTES, :HEXTRA, :ANOS2, :JAP, :CNACE, :TIPOPAIS, :CUATRIENAL)"
+    conn.executemany(query, datos)
+    print("Datos insertados con exito")
+    #cursor = conn.cursor()
+
+
+    #cursor.execute("SELECT * FROM datosMercadoLaboral")
+    #resultados = cursor.fetchall()
+
+    #for fila in resultados:
+    #    print(fila)
+
+
+def comparaCampos():
+    lista_1995= ['ORDENCCC', 'ORDENTRA', 'NUTS1', 'CNACE', 'ESTRATO2', 'CONTROL', 'MERCADO', 'CONVENIO', 'SEXO', 'TIPOPAIS', 'CNO1', 'RESPONSA', 'ESTU', 'MESANTI', 'ANOANTI', 'TIPOJOR', 'TC', 'VAL', 'VAN', 'PUENTES', 'JAP', 'JSP', 'HEXTRA', 'SALBASE', 'EXTRAORM', 'PHEXTRA', 'COMSAL', 'COMSALTT', 'COMSALV', 'IRPFMES', 'COTIZA', 'AFECMES', 'DIAS', 'SALBRUTO', 'PEXTRAAF', 'PEXTRAAV', 'VESP', 'AFECANO', 'MESCOMA', 'DIACOMA', 'ANOS2', 'FACTOTAL']
+    lista_2002= ['ORDENCCC', 'ORDENTRA', 'NUTS1', 'CNACE', 'ESTRATO2', 'CONTROL', 'MERCADO', 'CONVENIO', 'SEXO', 'TIPOPAIS', 'CNO1', 'RESPONSA', 'ESTU', 'MESANTI', 'ANOANTI', 'TIPOJOR', 'TC', 'VAL', 'VAN', 'PUENTES', 'JAP', 'JSP1', 'JSP2', 'HEXTRA', 'SALBASE', 'EXTRAORM', 'PHEXTRA', 'COMSAL', 'COMSALTT', 'COMSALV', 'IRPFMES', 'COTIZA', 'AFECMES', 'DIAS', 'SALBRUTO', 'PEXTRAAF', 'PEXTRAAV', 'VESP', 'AFECANO', 'MESCOMA', 'DIACOMA', 'ANOS2', 'FACTOTAL']
+    lista_2006= ['ORDENCCC', 'ORDENTRA', 'NUTS1', 'CNACE', 'ESTRATO2', 'CONTROL', 'MERCADO', 'CONVENIO', 'SEXO', 'TIPOPAIS', 'CNO1', 'RESPONSA', 'ESTU', 'MESANTI', 'ANOANTI', 'TIPOJOR', 'TC', 'VAL', 'VAN', 'PUENTES', 'JAP', 'JSP1', 'JSP2', 'HEXTRA', 'SALBASE', 'EXTRAORM', 'PHEXTRA', 'COMSAL', 'COMSALTT', 'COMSALV', 'IRPFMES', 'COTIZA', 'AFECMES', 'DIAS', 'SALBRUTO', 'PEXTRAAF', 'PEXTRAAV', 'VESP', 'AFECANO', 'MESCOMA', 'DIACOMA', 'ANOS2', 'FACTOTAL']
+    lista_2010= ["ORDENCCC", "ORDENTRA", "NUTS1", "CNACE", "ESTRATO2", "CONTROL", "MERCADO", "REGULACION", "SEXO", "TIPOPAIS", "CNO1", "RESPONSA", "ESTU", "ANOANTI", "MESANTI", "TIPOJOR", "TIPOCON", "FIJODISM", "FIJODISD", "VAL", "VAN", "PUENTES", "JAP", "JSP1", "JSP2", "HEXTRA", "DRELABM", "SIESPM1", "DSIESPM1", "SIESPM2", "DSIESPM2", "SALBASE", "EXTRAORM", "PHEXTRA", "COMSAL", "COMSALTT", "IRPFMES", "COTIZA", "BASE", "DRELABAM", "DRELABAD", "SIESPA1", "DSIESPA1", "SIESPA2", "DSIESPA2", "SIESPA3", "DSIESPA3", "SIESPA4", "DSIESPA4", "SALBRUTO", "GEXTRA", "VESP", "ANOS2", "FACTOTAL"]
+    lista_2014= ['ORDENCCC', 'ORDENTRA', 'NUTS1', 'CNACE', 'ESTRATO2', 'CONTROL', 'MERCADO', 'REGULACION', 'SEXO', 'TIPOPAIS', 'CNO1', 'RESPONSA', 'ESTU', 'ANOANTI', 'MESANTI', 'TIPOJOR', 'TIPOCON', 'FIJODISM', 'FIJODISD', 'VAL', 'VAN', 'PUENTES', 'JAP', 'JSP1', 'JSP2', 'HEXTRA', 'DRELABM', 'SIESPM1', 'DSIESPM1', 'SIESPM2', 'DSIESPM2', 'SALBASE', 'EXTRAORM', 'PHEXTRA', 'COMSAL', 'COMSALTT', 'IRPFMES', 'COTIZA', 'BASE', 'DRELABAM', 'DRELABAD', 'SIESPA1', 'DSIESPA1', 'SIESPA2', 'DSIESPA2', 'SIESPA3', 'DSIESPA3', 'SIESPA4', 'DSIESPA4', 'SALBRUTO', 'GEXTRA', 'VESP', 'ANOS2', 'FACTOTAL']
+    lista_2018= ['IDENCCC', 'ORDENTRA', 'NUTS1', 'CNACE', 'ESTRATO2', 'CONTROL', 'MERCADO', 'REGULACION', 'SEXO', 'TIPOPAIS', 'CNO1', 'RESPONSA', 'ESTU', 'ANOANTI', 'MESANTI', 'TIPOJOR', 'TIPOCON', 'FIJODISM', 'FIJODISD', 'VAL', 'VAN', 'PUENTES', 'JAP', 'JSP1', 'JSP2', 'HEXTRA', 'DRELABM', 'SIESPM1', 'DSIESPM1', 'SIESPM2', 'DSIESPM2', 'SALBASE', 'EXTRAORM', 'PHEXTRA', 'COMSAL', 'COMSALTT', 'IRPFMES', 'COTIZA', 'BASE', 'DRELABAM', 'DRELABAD', 'SIESPA1', 'DSIESPA1', 'SIESPA2', 'DSIESPA2', 'SIESPA3', 'DSIESPA3', 'SIESPA4', 'DSIESPA4', 'RETRINOIN', 'RETRIIN', 'GEXTRA', 'VESPNOIN', 'VESPIN', 'ANOS2', 'FACTOTAL']
+    
+    lista_total = list(set(lista_1995) & set(lista_2002) & set(lista_2006) & set(lista_2010) & set(lista_2014) & set(lista_2018))
+
+    print(lista_total)
+
+if __name__ == "__main__":
+    comparaCampos()
+   #cargarDatos()
+   #crearTabla()
+   #insercionDatos()
+   #print(datos[0])
+   #print(datos[100000]["cuatrienal"])
