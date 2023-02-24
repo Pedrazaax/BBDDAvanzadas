@@ -43,7 +43,7 @@ def insertarDatosDimensiones():
     cursor.execute("INSERT INTO control (id, descripcion) VALUES (?, ?), (?, ?)", (1, "PUBLICO", 2, "PRIVADO"))
     cursor.execute("INSERT INTO zona (idZona, descripcion) VALUES (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?)", (1, "NOROESTE", 2, "NORESTE", 3, "COMUNIDAD DE MADRID", 4, "CENTRO", 5, "ESTE", 6, "SUR", 7, "CANARIAS"))
     cursor.execute("INSERT INTO mercado (idMercado, descripcion) VALUES (?, ?), (?, ?), (?, ?), (?, ?)", (1, "LOCAL O REGIONAL", 2, "NACIONAL", 3, "UNIÓN EUROPEA", 4, "MUNDIAL"))
-    cursor.execute("INSERT INTO jornada (idJornada, descripcion) VALUES (?, ?), (?, ?)", (1, "TIEMPO COMPLETO", 2, "TIEMPO PARCIAL"))
+    cursor.execute("INSERT INTO jornada (idJornada, descripcion) VALUES (?, ?), (?, ?), (?, ?)", (1, "TIEMPO COMPLETO", 2, "TIEMPO PARCIAL",6, "TIEMPO PARCIAL"))
     cursor.execute("INSERT INTO puesto (idPuesto, descripcion) VALUES (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?)", 
         ( "A0", "DIRECTORES Y GERENTES",
         "B0", "TÉCNICOS Y PROFESIONALES CIENTÍFICOS E INTELECTUALES DE LA SALUD Y LA ENSEÑANZA",
@@ -133,16 +133,14 @@ def crearTablaHechos():
                   FOREIGN KEY(idControl) REFERENCES control(id),\
                   FOREIGN KEY(idZona) REFERENCES zona(idZona),\
                   FOREIGN KEY(idMercado) REFERENCES mercado(idMercado),\
-                  FOREIGN KEY(idJornada) REFERENCES jornada(idJornada),\
-                  FOREIGN KEY(idPuesto) REFERENCES puesto(idPuesto),\
-                  FOREIGN KEY(idEstudio) REFERENCES estudios(idEstudio),\
                   FOREIGN KEY(idTamanioEmpresa) REFERENCES tamanioEmpresa(idTamanioEmpresa),\
                   FOREIGN KEY(idSexo) REFERENCES sexo(idSexo),\
                   FOREIGN KEY(idEdad) REFERENCES edad(idEdad),\
-                  FOREIGN KEY(idSector) REFERENCES sector(idSector),\
+                  FOREIGN KEY(idJornada) REFERENCES jornada(idJornada),\
                   FOREIGN KEY(idPais) REFERENCES pais(idPais)\
                   )")
-
+                #Las claves ajenas que fallan
+                ## FOREIGN KEY(idJornada) REFERENCES jornada(idJornada),\  FOREIGN KEY(idPuesto) REFERENCES puesto(idPuesto),\   FOREIGN KEY(idEstudio) REFERENCES estudios(idEstudio),\ FOREIGN KEY(idSector) REFERENCES sector(idSector),\
     conn.commit()
 
 
@@ -152,6 +150,7 @@ if __name__ == "__main__":
    insertarDatosDimensiones()
    crearTablaHechos()
    insercionDatos()
+   conn.close()
    
    
   
