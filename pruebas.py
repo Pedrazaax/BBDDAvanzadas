@@ -15,6 +15,8 @@ conn = sqlite3.connect(db_name)
 conn.execute("PRAGMA foreign_keys = 1")
 datos = []
 
+cursor = conn.cursor()
+
 def cargarDatos():
     csvs =['./microdatos/EES_2002.csv','./microdatos/EES_2006.csv','./microdatos/EES_2010.csv','./microdatos/EES_2014.csv','./microdatos/EES_2018.csv']  #Para cargar todos los csvs a la vez
     contCuatrienal= 1 #Sirve para saber en que cuatrianual estamos sabiendo que empezamos en 1995
@@ -26,14 +28,15 @@ def cargarDatos():
                 row['CUATRIENAL'] = contCuatrienal
                 if(archivo == 'BBDDAvanzadas/microdatos/EES_2018.csv'):
                     row['ORDENCCC'] = row.pop('IDENCCC')  #Esto lo hacemos porque a partir del 2018 ordenccc no existe
+                if row['TIPOJOR'] == 2:
+                    row['TIPOJOR'] = 6
                 datos.append(row)
         contCuatrienal = contCuatrienal +1
 
 
 def crearTablaDimensiones():
-    
-    cursor = conn.cursor()
-    cursor.execute("drop table if exists datosMercadoLaboral")
+
+    #Generamos las tablas de la bbdd
     cursor.execute("CREATE TABLE control (id INTEGER PRIMARY KEY, descripcion TEXT)")
     cursor.execute("CREATE TABLE zona (idZona INTEGER PRIMARY KEY, descripcion TEXT)")
     cursor.execute("CREATE TABLE mercado (idMercado INTEGER PRIMARY KEY, descripcion TEXT)")
@@ -49,11 +52,11 @@ def crearTablaDimensiones():
     conn.commit()
 
 def insertarDatosDimensiones():
-    cursor = conn.cursor()
+    
     cursor.execute("INSERT INTO control (id, descripcion) VALUES (?, ?), (?, ?)", (1, "PUBLICO", 2, "PRIVADO"))
     cursor.execute("INSERT INTO zona (idZona, descripcion) VALUES (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?)", (1, "NOROESTE", 2, "NORESTE", 3, "COMUNIDAD DE MADRID", 4, "CENTRO", 5, "ESTE", 6, "SUR", 7, "CANARIAS"))
     cursor.execute("INSERT INTO mercado (idMercado, descripcion) VALUES (?, ?), (?, ?), (?, ?), (?, ?)", (1, "LOCAL O REGIONAL", 2, "NACIONAL", 3, "UNIÓN EUROPEA", 4, "MUNDIAL"))
-    cursor.execute("INSERT INTO jornada (idJornada, descripcion) VALUES (?, ?), (?, ?), (?, ?)", (1, "TIEMPO COMPLETO", 2, "TIEMPO PARCIAL",6, "TIEMPO PARCIAL"))
+    cursor.execute("INSERT INTO jornada (idJornada, descripcion) VALUES (?, ?), (?, ?)", (1, "TIEMPO COMPLETO", 6, "TIEMPO PARCIAL"))
     cursor.execute("INSERT INTO puesto (idPuesto, descripcion) VALUES (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?), (?, ?)", 
         ( "A0", "DIRECTORES Y GERENTES",
         "B0", "TÉCNICOS Y PROFESIONALES CIENTÍFICOS E INTELECTUALES DE LA SALUD Y LA ENSEÑANZA",
@@ -90,6 +93,7 @@ def insertarDatosDimensiones():
     conn.commit()
 
 def insercionDatos():
+
     query = "INSERT INTO datosMercadoLaboral (ORDENCCC ,idControl , idZona , EXTRAORM , SALBASE , IRPFMES , ANOANTI , idMercado , idJornada , FACTOTAL , VAL , idPuesto , MESANTI , COMSALTT , COTIZA , VAN , idEstudio , idTamanioEmpresa , PHEXTRA , COMSAL , ORDENTRA , idSexo , PUENTES , HEXTRA , idEdad , JAP , idSector , idPais , idCuatrienal) VALUES (:ORDENCCC, :CONTROL, :NUTS1, :EXTRAORM, :SALBASE, :IRPFMES, :ANOANTI, :MERCADO, :TIPOJOR, :FACTOTAL, :VAL, :CNO1, :MESANTI, :COMSALTT, :COTIZA, :VAN, :ESTU, :ESTRATO2, :PHEXTRA, :COMSAL, :ORDENTRA, :SEXO, :PUENTES, :HEXTRA, :ANOS2, :JAP, :CNACE, :TIPOPAIS, :CUATRIENAL)"
     try:
         conn.executemany(query, datos)
@@ -100,7 +104,6 @@ def insercionDatos():
 
     #cursor = conn.cursor()
 
-
     #cursor.execute("SELECT * FROM datosMercadoLaboral")
     #resultados = cursor.fetchall()
 
@@ -108,7 +111,7 @@ def insercionDatos():
     #    print(fila)
 
 def crearTablaHechos():
-    cursor = conn.cursor()
+    
     #cursor.execute("CREATE TABLE datosMercadoLaboral (ORDENCCC INTEGER ,idControl INTEGER, idZona INTEGER, EXTRAORM INTEGER, SALBASE INTEGER, IRPFMES INTEGER, ANOANTI INTEGER, idMercado INTEGER, idJornada INTEGER, FACTOTAL INTEGER, VAL INTEGER, idPuesto TEXT, MESANTI INTEGER, COMSALTT INTEGER, COTIZA INTEGER, VAN INTEGER, idEstudio INTEGER, idTamanioEmpresa INTEGER, PHEXTRA INTEGER, COMSAL INTEGER, ORDENTRA INTEGER, idSexo INTEGER, PUENTES INTEGER, HEXTRA INTEGER, idEdad INTEGER, JAP INTEGER, idSector TEXT, idPais INTEGER, idCuatrienal INTEGER, FOREIGN KEY(idControl) REFERENCES control(id), FOREIGN KEY(idZona) REFERENCES zona(idZona), FOREIGN KEY(idMercado) REFERENCES mercado(idMercado), FOREIGN KEY(idJornada) REFERENCES jornada(idJornada), FOREIGN KEY(idPuesto) REFERENCES puesto(idPuesto), FOREIGN KEY(idEstudio) REFERENCES estudios(idEstudio), FOREIGN KEY(idTamanioEmpresa) REFERENCES tamanioEmpresa(idTamanioEmpresa), FOREIGN KEY(idSexo) REFERENCES sexo(idSexo), FOREIGN KEY(idEdad) REFERENCES edad(idEdad), FOREIGN KEY(idSector) REFERENCES sector(idSector), FOREIGN KEY(idPais) REFERENCES pais(idPais))")
     cursor.execute("CREATE TABLE datosMercadoLaboral (\
                   ORDENCCC INTEGER, \
@@ -140,19 +143,21 @@ def crearTablaHechos():
                   idSector TEXT,\
                   idPais INTEGER,\
                   idCuatrienal INTEGER,\
-                  FOREIGN KEY(idControl) REFERENCES control(id),\
-                  FOREIGN KEY(idZona) REFERENCES zona(idZona),\
-                  FOREIGN KEY(idMercado) REFERENCES mercado(idMercado),\
-                  FOREIGN KEY(idTamanioEmpresa) REFERENCES tamanioEmpresa(idTamanioEmpresa),\
-                  FOREIGN KEY(idSexo) REFERENCES sexo(idSexo),\
-                  FOREIGN KEY(idEdad) REFERENCES edad(idEdad),\
-                  FOREIGN KEY(idJornada) REFERENCES jornada(idJornada),\
-                  FOREIGN KEY(idPais) REFERENCES pais(idPais)\
                   )")
+    
+                
+                #  FOREIGN KEY(idControl) REFERENCES control(id),\
+                #  FOREIGN KEY(idZona) REFERENCES zona(idZona),\
+                #  FOREIGN KEY(idMercado) REFERENCES mercado(idMercado),\
+                #  FOREIGN KEY(idTamanioEmpresa) REFERENCES tamanioEmpresa(idTamanioEmpresa),\
+                #  FOREIGN KEY(idSexo) REFERENCES sexo(idSexo),\
+                #  FOREIGN KEY(idEdad) REFERENCES edad(idEdad),\
+                #  FOREIGN KEY(idJornada) REFERENCES jornada(idJornada),\
+                #  FOREIGN KEY(idPais) REFERENCES pais(idPais)\
+
                 #Las claves ajenas que fallan
                 ## FOREIGN KEY(idJornada) REFERENCES jornada(idJornada),\  FOREIGN KEY(idPuesto) REFERENCES puesto(idPuesto),\   FOREIGN KEY(idEstudio) REFERENCES estudios(idEstudio),\ FOREIGN KEY(idSector) REFERENCES sector(idSector),\
     conn.commit()
-
 
 if __name__ == "__main__":
    cargarDatos()
