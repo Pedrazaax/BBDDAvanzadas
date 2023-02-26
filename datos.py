@@ -96,6 +96,7 @@ def insercionDatos():
     except sqlite3.DatabaseError as e:
         print("Error en la inserción de datos:", e)
 
+    conn.commit()
 
     #cursor = conn.cursor()
 
@@ -162,9 +163,21 @@ def crearBBDD():
     crearTablaHechos()
     insercionDatos()
 
+def consultas():
+    cursor = conn.cursor()
+    # Diferencia salarial entre géneros, según zona y sector 
+    cursor.execute("SELECT zona.descripcion AS Zona, sector.descripcion AS Sector, AVG(CASE WHEN idSexo = 1 THEN SALBASE END) - AVG(CASE WHEN idSexo = 6 THEN SALBASE END) AS DiferenciaSalarial FROM datosMercadoLaboral JOIN zona ON datosMercadoLaboral.idZona = zona.idZona JOIN sector ON datosMercadoLaboral.idSector = sector.idSector WHERE idSexo IN (1, 6) GROUP BY zona.idZona, sector.idSector ORDER BY Sector")
+    # no funciona cursor.execute("SELECT pais.descripcion AS Nacionalidad,sexo.descripcion AS Genero, AVG(CASE WHEN pais.idPais = 1 AND sexo.idSexo = 1 THEN SALBASE END) AS SalarioHombresEspañoles, AVG(CASE WHEN pais.idPais = 1 AND sexo.idSexo = 6 THEN SALBASE END) AS SalarioMujeresEspañolas, AVG(CASE WHEN pais.idPais = 2 AND sexo.idSexo = 1 THEN SALBASE END) AS SalarioHombresExtranjeros, AVG(CASE WHEN pais.idPais = 2 AND sexo.idSexo = 6 THEN SALBASE END) AS SalarioMujeresExtranjeras FROM datosMercadoLaboral JOIN pais ON datosMercadoLaboral.idPais = pais.idPais JOIN sexo ON datosMercadoLaboral.idSexo = sexo.idSexo WHERE pais.idPais IN (1, 2) AND sexo.idSexo IN (1, 6) GROUP BY pais.descripcion, sexo.descripcion")
+    resultados = cursor.fetchall()
+    for row in resultados:
+        print(row)
+
+    
+
 
 if __name__ == "__main__":
-   crearBBDD()
+   #crearBBDD()
+   consultas()
    conn.close()
    
    
