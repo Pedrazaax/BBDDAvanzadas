@@ -6,16 +6,25 @@ conn.execute("PRAGMA foreign_keys = 1")
 datos = []
 
 def cargarDatos():
-    csvs =['BBDDAvanzadas/microdatos/EES_2002.csv','BBDDAvanzadas/microdatos/EES_2006.csv','BBDDAvanzadas/microdatos/EES_2010.csv','BBDDAvanzadas/microdatos/EES_2014.csv','BBDDAvanzadas/microdatos/EES_2018.csv']  #Para cargar todos los csvs a la vez
-    contCuatrienal= 1 #Sirve para saber en que cuatrianual estamos sabiendo que empezamos en 1995
+    csvs =['BBDDAvanzadas/microdatos/EES_2010.csv','BBDDAvanzadas/microdatos/EES_2014.csv','BBDDAvanzadas/microdatos/EES_2018.csv']  #Para cargar todos los csvs a la vez
+    contCuatrienal= 1 #Sirve para saber en que cuatrianual estamos sabiendo que empezamos en 2010
     # la primera fila la toma para el nombre de los campos y a partir de ahi añade los datos
     for archivo in csvs:   #archivo representa al csv que se va a cargar
         with open(archivo, 'r') as f:
             reader = csv.DictReader(f, delimiter='\t')
             for row in reader:
+
                 row['CUATRIENAL'] = contCuatrienal
-                if(archivo == 'BBDDAvanzadas/microdatos/EES_2018.csv'):
-                    row['ORDENCCC'] = row.pop('IDENCCC')  #Esto lo hacemos porque a partir del 2018 ordenccc no existe
+                if (archivo == 'BBDDAvanzadas/microdatos/EES_2018.csv'):
+                    # Esto lo hacemos porque a partir del 2018 ordenccc no existe
+                    row['ORDENCCC'] = row.pop('IDENCCC')
+
+                if (archivo == 'BBDDAvanzadas/microdatos/EES_2010.csv'):
+                    estudio = int(row['ESTU'])
+                    if (estudio > 5):
+                        estudio = estudio - 1
+                        row['ESTU'] = estudio
+
                 datos.append(row)
         contCuatrienal = contCuatrienal +1
 
@@ -137,19 +146,25 @@ def crearTablaHechos():
                   FOREIGN KEY(idSexo) REFERENCES sexo(idSexo),\
                   FOREIGN KEY(idEdad) REFERENCES edad(idEdad),\
                   FOREIGN KEY(idJornada) REFERENCES jornada(idJornada),\
+                  FOREIGN KEY(idPuesto) REFERENCES puesto(idPuesto),\
+                  FOREIGN KEY(idEstudio) REFERENCES estudios(idEstudio),\
+                  FOREIGN KEY(idSector) REFERENCES sector(idSector),\
                   FOREIGN KEY(idPais) REFERENCES pais(idPais)\
                   )")
                 #Las claves ajenas que fallan
                 ## FOREIGN KEY(idJornada) REFERENCES jornada(idJornada),\  FOREIGN KEY(idPuesto) REFERENCES puesto(idPuesto),\   FOREIGN KEY(idEstudio) REFERENCES estudios(idEstudio),\ FOREIGN KEY(idSector) REFERENCES sector(idSector),\
     conn.commit()
 
+def crearBBDD():
+    cargarDatos()
+    crearTablaDimensiones()
+    insertarDatosDimensiones()
+    crearTablaHechos()
+    insercionDatos()
+
 
 if __name__ == "__main__":
-   cargarDatos()
-   crearTablaDimensiones()
-   insertarDatosDimensiones()
-   crearTablaHechos()
-   insercionDatos()
+   crearBBDD()
    conn.close()
    
    
