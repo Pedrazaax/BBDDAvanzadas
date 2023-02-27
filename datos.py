@@ -1,5 +1,6 @@
 import csv
 import sqlite3
+import pandas as pd
 
 conn = sqlite3.connect('salarios.db')
 conn.execute("PRAGMA foreign_keys = 1")
@@ -166,14 +167,24 @@ def crearBBDD():
 def consultas():
     cursor = conn.cursor()
     # Diferencia salarial entre géneros, según zona y sector 
-    cursor.execute("SELECT zona.descripcion AS Zona, sector.descripcion AS Sector, AVG(CASE WHEN idSexo = 1 THEN SALBASE END) - AVG(CASE WHEN idSexo = 6 THEN SALBASE END) AS DiferenciaSalarial FROM datosMercadoLaboral JOIN zona ON datosMercadoLaboral.idZona = zona.idZona JOIN sector ON datosMercadoLaboral.idSector = sector.idSector WHERE idSexo IN (1, 6) GROUP BY zona.idZona, sector.idSector ORDER BY Sector")
+    consulta="SELECT zona.descripcion AS Zona, sector.descripcion AS Sector, AVG(CASE WHEN idSexo = 1 THEN SALBASE END) - AVG(CASE WHEN idSexo = 6 THEN SALBASE END) AS DiferenciaSalarial FROM datosMercadoLaboral JOIN zona ON datosMercadoLaboral.idZona = zona.idZona JOIN sector ON datosMercadoLaboral.idSector = sector.idSector WHERE idSexo IN (1, 6) GROUP BY zona.idZona, sector.idSector ORDER BY Sector"
+    cursor.execute(consulta)
    
     #Porcentaje de incremento de sueldo medio de 2 3 5 y 10 años de antiguedad respecto al primer año
-    cursor.execute("SELECT ANOANTI, AVG(SALBASE) AS SalarioPromedio, 100 * (AVG(SALBASE) / (SELECT AVG(SALBASE) FROM datosMercadoLaboral WHERE ANOANTI = 1)) - 100 AS DiferenciaPorcentual FROM datosMercadoLaboral WHERE ANOANTI IN (1, 2, 3, 5, 10) GROUP BY ANOANTI ORDER BY ANOANTI ASC")
+    #consulta="SELECT ANOANTI, AVG(SALBASE) AS SalarioPromedio, 100 * (AVG(SALBASE) / (SELECT AVG(SALBASE) FROM datosMercadoLaboral WHERE ANOANTI = 1)) - 100 AS DiferenciaPorcentual FROM datosMercadoLaboral WHERE ANOANTI IN (1, 2, 3, 5, 10) GROUP BY ANOANTI ORDER BY ANOANTI ASC"
+    #cursor.execute(consulta)
     
     #Salario promedio segun año de antiguedad y cuanto % cambia respecto al anterior
-    cursor.execute("SELECT ANOANTI, AVG(SALBASE) AS SalarioPromedio, ROUND((AVG(SALBASE) - LAG(AVG(SALBASE), 1) OVER (ORDER BY ANOANTI ASC)) / LAG(AVG(SALBASE), 1) OVER (ORDER BY ANOANTI ASC) * 100, 2) AS PorcentajeCambio FROM datosMercadoLaboral GROUP BY ANOANTI ORDER BY ANOANTI ASC")
+    #consulta="SELECT ANOANTI, AVG(SALBASE) AS SalarioPromedio, ROUND((AVG(SALBASE) - LAG(AVG(SALBASE), 1) OVER (ORDER BY ANOANTI ASC)) / LAG(AVG(SALBASE), 1) OVER (ORDER BY ANOANTI ASC) * 100, 2) AS PorcentajeCambio FROM datosMercadoLaboral GROUP BY ANOANTI ORDER BY ANOANTI ASC"
+    
+    dataframe = pd.read_sql_query(consulta, conn)
+    cursor.execute(consulta)
+
     resultados = cursor.fetchall()
+
+    conn.close()
+    dataframe.to_excel('./consulta.xlsx', index=False)
+
     for row in resultados:
         print(row)
 
