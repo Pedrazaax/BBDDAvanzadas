@@ -3,29 +3,31 @@
 
 import csv
 import sqlite3
-import os
 
-#Generamos bbdd, primero la eliminamos si existe para que no aparezca error al volver a generar las tablas.
-db_name = 'salarios.db'
-
-if os.path.exists(db_name):
-    os.remove(db_name)
-
-conn = sqlite3.connect(db_name)
+conn = sqlite3.connect('salarios.db')
 conn.execute("PRAGMA foreign_keys = 1")
 datos = []
 
 def cargarDatos():
-    csvs =['./microdatos/EES_2002.csv','./microdatos/EES_2006.csv','./microdatos/EES_2010.csv','./microdatos/EES_2014.csv','./microdatos/EES_2018.csv']  #Para cargar todos los csvs a la vez
-    contCuatrienal= 1 #Sirve para saber en que cuatrianual estamos sabiendo que empezamos en 1995
+    csvs =['./microdatos/EES_2010.csv','./microdatos/EES_2014.csv','./microdatos/EES_2018.csv']  #Para cargar todos los csvs a la vez
+    contCuatrienal= 1 #Sirve para saber en que cuatrianual estamos sabiendo que empezamos en 2010
     # la primera fila la toma para el nombre de los campos y a partir de ahi añade los datos
     for archivo in csvs:   #archivo representa al csv que se va a cargar
         with open(archivo, 'r') as f:
             reader = csv.DictReader(f, delimiter='\t')
             for row in reader:
+
                 row['CUATRIENAL'] = contCuatrienal
-                if(archivo == 'BBDDAvanzadas/microdatos/EES_2018.csv'):
-                    row['ORDENCCC'] = row.pop('IDENCCC')  #Esto lo hacemos porque a partir del 2018 ordenccc no existe
+                if (archivo == './microdatos/EES_2018.csv'):
+                    # Esto lo hacemos porque a partir del 2018 ordenccc no existe
+                    row['ORDENCCC'] = row.pop('IDENCCC')
+
+                if (archivo == './microdatos/EES_2010.csv'):
+                    estudio = int(row['ESTU'])
+                    if (estudio > 5):
+                        estudio = estudio - 1
+                        row['ESTU'] = estudio
+
                 datos.append(row)
         contCuatrienal = contCuatrienal +1
 
@@ -97,15 +99,7 @@ def insercionDatos():
     except sqlite3.DatabaseError as e:
         print("Error en la inserción de datos:", e)
 
-
-    #cursor = conn.cursor()
-
-
-    #cursor.execute("SELECT * FROM datosMercadoLaboral")
-    #resultados = cursor.fetchall()
-
-    #for fila in resultados:
-    #    print(fila)
+    conn.commit()
 
 def crearTablaHechos():
     cursor = conn.cursor()
@@ -147,22 +141,40 @@ def crearTablaHechos():
                   FOREIGN KEY(idSexo) REFERENCES sexo(idSexo),\
                   FOREIGN KEY(idEdad) REFERENCES edad(idEdad),\
                   FOREIGN KEY(idJornada) REFERENCES jornada(idJornada),\
+                  FOREIGN KEY(idPuesto) REFERENCES puesto(idPuesto),\
+                  FOREIGN KEY(idEstudio) REFERENCES estudios(idEstudio),\
+                  FOREIGN KEY(idSector) REFERENCES sector(idSector),\
                   FOREIGN KEY(idPais) REFERENCES pais(idPais)\
                   )")
                 #Las claves ajenas que fallan
                 ## FOREIGN KEY(idJornada) REFERENCES jornada(idJornada),\  FOREIGN KEY(idPuesto) REFERENCES puesto(idPuesto),\   FOREIGN KEY(idEstudio) REFERENCES estudios(idEstudio),\ FOREIGN KEY(idSector) REFERENCES sector(idSector),\
     conn.commit()
 
+def crearBBDD():
+    cargarDatos()
+    crearTablaDimensiones()
+    insertarDatosDimensiones()
+    crearTablaHechos()
+    insercionDatos()
+
+def consultas():
+    cursor = conn.cursor()
+    # Diferencia salarial entre géneros, según zona y sector 
+    cursor.execute("SELECT zona.descripcion AS Zona, sector.descripcion AS Sector, AVG(CASE WHEN idSexo = 1 THEN SALBASE END) - AVG(CASE WHEN idSexo = 6 THEN SALBASE END) AS DiferenciaSalarial FROM datosMercadoLaboral JOIN zona ON datosMercadoLaboral.idZona = zona.idZona JOIN sector ON datosMercadoLaboral.idSector = sector.idSector WHERE idSexo IN (1, 6) GROUP BY zona.idZona, sector.idSector ORDER BY Sector")
+    # no funciona cursor.execute("SELECT pais.descripcion AS Nacionalidad,sexo.descripcion AS Genero, AVG(CASE WHEN pais.idPais = 1 AND sexo.idSexo = 1 THEN SALBASE END) AS SalarioHombresEspañoles, AVG(CASE WHEN pais.idPais = 1 AND sexo.idSexo = 6 THEN SALBASE END) AS SalarioMujeresEspañolas, AVG(CASE WHEN pais.idPais = 2 AND sexo.idSexo = 1 THEN SALBASE END) AS SalarioHombresExtranjeros, AVG(CASE WHEN pais.idPais = 2 AND sexo.idSexo = 6 THEN SALBASE END) AS SalarioMujeresExtranjeras FROM datosMercadoLaboral JOIN pais ON datosMercadoLaboral.idPais = pais.idPais JOIN sexo ON datosMercadoLaboral.idSexo = sexo.idSexo WHERE pais.idPais IN (1, 2) AND sexo.idSexo IN (1, 6) GROUP BY pais.descripcion, sexo.descripcion")
+    resultados = cursor.fetchall()
+    for row in resultados:
+        print(row)
+
+    #Relación entre salario según la titulación, en la zona donde se ejerce, sexo y sector. 
+
+    #¿Cuánto cobrara según sector en los próximos 4 años? 
+
+    #Titulación de las personas que trabajan media jornada, sexo y sector. 
+    
 
 if __name__ == "__main__":
-   cargarDatos()
-   crearTablaDimensiones()
-   insertarDatosDimensiones()
-   crearTablaHechos()
-   insercionDatos()
+   #crearBBDD()
+   consultas()
    conn.close()
    
-   
-  
-   #print(datos[0])
-   #print(datos[100000]["cuatrienal"])
