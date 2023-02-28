@@ -90,7 +90,12 @@ def insertarDatosDimensiones():
     conn.commit()
 
 def insercionDatos():
-    query = "INSERT INTO datosMercadoLaboral (ORDENCCC ,idControl , idZona , EXTRAORM , SALBASE , IRPFMES , ANOANTI , idMercado , idJornada , FACTOTAL , VAL , idPuesto , MESANTI , COMSALTT , COTIZA , VAN , idEstudio , idTamanioEmpresa , PHEXTRA , COMSAL , ORDENTRA , idSexo , PUENTES , HEXTRA , idEdad , JAP , idSector , idPais , idCuatrienal) VALUES (:ORDENCCC, :CONTROL, :NUTS1, :EXTRAORM, :SALBASE, :IRPFMES, :ANOANTI, :MERCADO, :TIPOJOR, :FACTOTAL, :VAL, :CNO1, :MESANTI, :COMSALTT, :COTIZA, :VAN, :ESTU, :ESTRATO2, :PHEXTRA, :COMSAL, :ORDENTRA, :SEXO, :PUENTES, :HEXTRA, :ANOS2, :JAP, :CNACE, :TIPOPAIS, :CUATRIENAL)"
+    query = "INSERT INTO datosMercadoLaboral (ORDENCCC ,idControl , idZona , \
+    EXTRAORM , SALBASE , IRPFMES , ANOANTI , idMercado , idJornada , FACTOTAL , \
+    VAL , idPuesto , MESANTI , COMSALTT , COTIZA , VAN , idEstudio , idTamanioEmpresa , \
+    PHEXTRA , COMSAL , ORDENTRA , idSexo , PUENTES , HEXTRA , idEdad , JAP , idSector , idPais , idCuatrienal) \
+    VALUES (:ORDENCCC, :CONTROL, :NUTS1, :EXTRAORM, :SALBASE, :IRPFMES, :ANOANTI, :MERCADO, :TIPOJOR, :FACTOTAL, :VAL, :CNO1, :MESANTI, \
+    :COMSALTT, :COTIZA, :VAN, :ESTU, :ESTRATO2, :PHEXTRA, :COMSAL, :ORDENTRA, :SEXO, :PUENTES, :HEXTRA, :ANOS2, :JAP, :CNACE, :TIPOPAIS, :CUATRIENAL)"
     try:
         conn.executemany(query, datos)
         print("Datos insertados con éxito")
@@ -101,7 +106,6 @@ def insercionDatos():
 
     #cursor = conn.cursor()
 
-
     #cursor.execute("SELECT * FROM datosMercadoLaboral")
     #resultados = cursor.fetchall()
 
@@ -110,7 +114,6 @@ def insercionDatos():
 
 def crearTablaHechos():
     cursor = conn.cursor()
-    #cursor.execute("CREATE TABLE datosMercadoLaboral (ORDENCCC INTEGER ,idControl INTEGER, idZona INTEGER, EXTRAORM INTEGER, SALBASE INTEGER, IRPFMES INTEGER, ANOANTI INTEGER, idMercado INTEGER, idJornada INTEGER, FACTOTAL INTEGER, VAL INTEGER, idPuesto TEXT, MESANTI INTEGER, COMSALTT INTEGER, COTIZA INTEGER, VAN INTEGER, idEstudio INTEGER, idTamanioEmpresa INTEGER, PHEXTRA INTEGER, COMSAL INTEGER, ORDENTRA INTEGER, idSexo INTEGER, PUENTES INTEGER, HEXTRA INTEGER, idEdad INTEGER, JAP INTEGER, idSector TEXT, idPais INTEGER, idCuatrienal INTEGER, FOREIGN KEY(idControl) REFERENCES control(id), FOREIGN KEY(idZona) REFERENCES zona(idZona), FOREIGN KEY(idMercado) REFERENCES mercado(idMercado), FOREIGN KEY(idJornada) REFERENCES jornada(idJornada), FOREIGN KEY(idPuesto) REFERENCES puesto(idPuesto), FOREIGN KEY(idEstudio) REFERENCES estudios(idEstudio), FOREIGN KEY(idTamanioEmpresa) REFERENCES tamanioEmpresa(idTamanioEmpresa), FOREIGN KEY(idSexo) REFERENCES sexo(idSexo), FOREIGN KEY(idEdad) REFERENCES edad(idEdad), FOREIGN KEY(idSector) REFERENCES sector(idSector), FOREIGN KEY(idPais) REFERENCES pais(idPais))")
     cursor.execute("CREATE TABLE datosMercadoLaboral (\
                   ORDENCCC INTEGER, \
                   idControl INTEGER,\
@@ -153,8 +156,7 @@ def crearTablaHechos():
                   FOREIGN KEY(idSector) REFERENCES sector(idSector),\
                   FOREIGN KEY(idPais) REFERENCES pais(idPais)\
                   )")
-                #Las claves ajenas que fallan
-                ## FOREIGN KEY(idJornada) REFERENCES jornada(idJornada),\  FOREIGN KEY(idPuesto) REFERENCES puesto(idPuesto),\   FOREIGN KEY(idEstudio) REFERENCES estudios(idEstudio),\ FOREIGN KEY(idSector) REFERENCES sector(idSector),\
+                
     conn.commit()
 
 def crearBBDD():
@@ -167,11 +169,11 @@ def crearBBDD():
 def consultas():
     cursor = conn.cursor()
     # Diferencia salarial entre géneros, según zona y sector 
-    consulta="SELECT zona.descripcion AS Zona, sector.descripcion AS Sector, AVG(CASE WHEN idSexo = 1 THEN SALBASE END) - AVG(CASE WHEN idSexo = 6 THEN SALBASE END) AS DiferenciaSalarial FROM datosMercadoLaboral JOIN zona ON datosMercadoLaboral.idZona = zona.idZona JOIN sector ON datosMercadoLaboral.idSector = sector.idSector WHERE idSexo IN (1, 6) GROUP BY zona.idZona, sector.idSector ORDER BY Sector"
-    cursor.execute(consulta)
+    #consulta="SELECT zona.descripcion AS Zona, sector.descripcion AS Sector, AVG(CASE WHEN idSexo = 1 THEN SALBASE END) - AVG(CASE WHEN idSexo = 6 THEN SALBASE END) AS DiferenciaSalarial FROM datosMercadoLaboral JOIN zona ON datosMercadoLaboral.idZona = zona.idZona JOIN sector ON datosMercadoLaboral.idSector = sector.idSector WHERE idSexo IN (1, 6) and sector.idSector='O0' GROUP BY sector.idSector,zona.idZona ORDER BY Sector"
+    #cursor.execute(consulta)
    
     #Porcentaje de incremento de sueldo medio de 2 3 5 y 10 años de antiguedad respecto al primer año
-    #consulta="SELECT ANOANTI, AVG(SALBASE) AS SalarioPromedio, 100 * (AVG(SALBASE) / (SELECT AVG(SALBASE) FROM datosMercadoLaboral WHERE ANOANTI = 1)) - 100 AS DiferenciaPorcentual FROM datosMercadoLaboral WHERE ANOANTI IN (1, 2, 3, 5, 10) GROUP BY ANOANTI ORDER BY ANOANTI ASC"
+    consulta="SELECT ANOANTI, AVG(SALBASE) AS SalarioPromedio, 100 * (AVG(SALBASE) / (SELECT AVG(SALBASE) FROM datosMercadoLaboral WHERE ANOANTI = 1)) - 100 AS DiferenciaPorcentual FROM datosMercadoLaboral WHERE ANOANTI IN (1, 2, 3, 5, 10) GROUP BY ANOANTI ORDER BY ANOANTI ASC"
     #cursor.execute(consulta)
     
     #Salario promedio segun año de antiguedad y cuanto % cambia respecto al anterior
